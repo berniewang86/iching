@@ -1,6 +1,6 @@
 // 周易 · 学 — Service Worker
 // 版本号更新会触发缓存刷新
-const VERSION   = 'iching-v4';
+const VERSION   = 'iching-v5';
 const CACHE_KEY = VERSION;
 
 // 需要缓存的文件（全部离线可用）
@@ -33,11 +33,27 @@ self.addEventListener('activate', event => {
   );
 });
 
-// ── 请求拦截：缓存优先，缓存没有再联网 ──
+// ── 请求拦截：页面优先联网，其它资源缓存优先 ──
 self.addEventListener('fetch', event => {
   const request = event.request;
 
   if (request.method !== 'GET') return;
+
+  if (request.mode === 'navigate') {
+    event.respondWith(
+      fetch(request).then(response => {
+        if (response && response.status === 200 && response.type === 'basic') {
+          const copy = response.clone();
+          caches.open(CACHE_KEY).then(cache => {
+            cache.put('./', copy.clone());
+            cache.put('./index.html', copy);
+          });
+        }
+        return response;
+      }).catch(() => caches.match('./index.html'))
+    );
+    return;
+  }
 
   event.respondWith(
     caches.match(request).then(cached => {
@@ -50,13 +66,7 @@ self.addEventListener('fetch', event => {
           caches.open(CACHE_KEY).then(cache => cache.put(request, copy));
         }
         return response;
-      }).catch(() => {
-        // 离线刷新首页、带 query 的入口，或从桌面图标打开时，都回到已缓存的主页面
-        if (request.mode === 'navigate') {
-          return caches.match('./index.html');
-        }
-        return caches.match(request.url.replace(/[?#].*$/, ''));
-      });
+      }).catch(() => caches.match(request.url.replace(/[?#].*$/, '')));
     })
   );
 });

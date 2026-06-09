@@ -28,6 +28,7 @@
   --nav:       60px;
   --safe-t:    env(safe-area-inset-top, 0px);
   --safe-b:    env(safe-area-inset-bottom, 0px);
+  --safe-b-cap: min(var(--safe-b), 34px);
 }
 *{ box-sizing:border-box; margin:0; padding:0; -webkit-tap-highlight-color:transparent; }
 html,body{ height:100%; min-height:100%; overflow:hidden; background:var(--ink); color:var(--cream);
@@ -58,12 +59,18 @@ header{
   transition:all .2s;
 }
 .hdr-btn:active{ background:var(--card-h); color:var(--gold); }
+.logo-mark{
+  width:1.35em; height:1.35em; display:inline-block;
+  background:url("./icon.svg") center/contain no-repeat;
+  flex-shrink:0;
+}
+.hdr-btn .logo-mark{ width:24px; height:24px; }
 
 /* ── MAIN SCROLLABLE ── */
 main{
   flex:1; min-height:0; overflow-y:auto; overflow-x:hidden;
   -webkit-overflow-scrolling:touch;
-  padding-bottom:calc(var(--nav) + var(--safe-b) + .5rem);
+  padding-bottom:calc(var(--nav) + var(--safe-b-cap) + .5rem);
 }
 
 /* ── TABS ── */
@@ -73,12 +80,12 @@ main{
 /* ── BOTTOM NAV ── */
 .bottom-nav{
   flex-shrink:0;
-  height:calc(var(--nav) + var(--safe-b));
-  padding-bottom:var(--safe-b);
+  height:calc(var(--nav) + var(--safe-b-cap));
+  padding-bottom:var(--safe-b-cap);
   background:rgba(26,20,16,.95);
   backdrop-filter:blur(14px);
   border-top:1px solid var(--div);
-  display:flex; align-items:stretch;
+  display:flex; align-items:flex-end;
   position:fixed; left:0; right:0; bottom:0; z-index:20;
 }
 .nav-btn{
@@ -91,6 +98,7 @@ main{
 }
 .nav-btn.active{ color:var(--gold); }
 .nav-icon{ font-size:1.3rem; line-height:1; }
+.nav-icon.logo-mark{ width:26px; height:26px; font-size:1rem; }
 
 /* ══════════════════════
    TAB: 发现 (HOME)
@@ -141,6 +149,7 @@ main{
 }
 .quick-card:active{ background:var(--card-h); transform:scale(.97); }
 .quick-icon{ font-size:1.6rem; margin-bottom:.4rem; }
+.quick-icon.logo-mark{ width:34px; height:34px; margin-left:auto; margin-right:auto; }
 .quick-name{ font-size:.72rem; color:var(--cream2); letter-spacing:.1em; }
 
 /* Intro card */
@@ -458,7 +467,7 @@ main{
     <div class="hdr-title" id="hdrTitle">周 易</div>
     <div class="hdr-right">
       <div class="hdr-btn" onclick="openSearch()" id="searchBtn" style="display:none">🔍</div>
-      <div class="hdr-btn" onclick="todayBtn()">☯</div>
+      <div class="hdr-btn" onclick="todayBtn()"><span class="logo-mark" aria-hidden="true"></span></div>
     </div>
   </header>
 
@@ -484,7 +493,7 @@ main{
         <div class="section-hd">快 速 入 口</div>
         <div class="quick-row">
           <div class="quick-card" onclick="switchTab('bagua')">
-            <div class="quick-icon">☯</div>
+            <div class="quick-icon logo-mark" aria-hidden="true"></div>
             <div class="quick-name">八 卦</div>
           </div>
           <div class="quick-card" onclick="switchTab('hexagrams')">
@@ -574,7 +583,7 @@ main{
   <!-- BOTTOM NAV -->
   <nav class="bottom-nav">
     <button class="nav-btn active" id="nav-home" onclick="switchTab('home')">
-      <span class="nav-icon">☯</span>发现
+      <span class="nav-icon logo-mark" aria-hidden="true"></span>发现
     </button>
     <button class="nav-btn" id="nav-bagua" onclick="switchTab('bagua')">
       <span class="nav-icon">☰</span>八卦
@@ -972,7 +981,8 @@ function resetGuaM(){
   });
 }
 function tossCoinM(){
-  if(mTossing||mTossCount>=6) return;
+  if(mTossing) return;
+  if(mTossCount>=6){ resetGuaM(); return; }
   mTossing=true;
   const runId=mRunId;
   document.getElementById('tossBtnM').disabled=true;
@@ -1018,10 +1028,13 @@ function addYaoM(isYang, isChanging, coinRes){
     ${coinHTML}`;
   prog.insertBefore(row, prog.firstChild);
   setTimeout(()=>row.style.opacity='1',30);
+  const btn=document.getElementById('tossBtnM');
   if(mTossCount<6){
-    const btn=document.getElementById('tossBtnM');
     btn.disabled=false; btn.textContent=`投 掷（${mTossCount}/6）`;
-  } else { showGuaM(); }
+  } else {
+    showGuaM();
+    btn.disabled=false; btn.textContent='重新起卦';
+  }
 }
 function randomGuaM(){
   if(mTossing) return;
